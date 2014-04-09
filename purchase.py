@@ -32,5 +32,5 @@ class CreatePurchase:
     @classmethod
     def compute_purchase_line(cls, request):
         line = super(CreatePurchase, cls).compute_purchase_line(request)
-        line.quantity = max(request.quantity, request.minimum_quantity)
+        line.quantity = max(line.quantity, request.minimum_quantity)
         return line
