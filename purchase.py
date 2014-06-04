@@ -14,10 +14,10 @@ class ProductSupplier:
 
 class PurchaseRequest:
     __name__ = 'purchase.request'
-    minimum_quantity = fields.Function(fields.Float('Minimum Quantity',
-            on_change_with=['supplier', 'product']),
+    minimum_quantity = fields.Function(fields.Float('Minimum Quantity'),
         'on_change_with_minimum_quantity')
 
+    @fields.depends('supplier', 'product')
     def on_change_with_minimum_quantity(self, name):
         if not self.product:
             return
