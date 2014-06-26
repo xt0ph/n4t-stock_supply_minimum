@@ -8,6 +8,7 @@ def register():
     Pool.register(
         ProductSupplier,
         PurchaseRequest,
+        PurchaseLine,
         module='stock_supply_minimum', type_='model')
     Pool.register(
         CreatePurchase,
