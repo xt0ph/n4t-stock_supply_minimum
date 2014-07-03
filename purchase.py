@@ -11,13 +11,33 @@ __metaclass__ = PoolMeta
 
 class ProductSupplier:
     __name__ = 'purchase.product_supplier'
-    minimum_quantity = fields.Float('Minimum Quantity')
+    purchase_uom_digits = fields.Function(
+        fields.Integer('Purchase UOM Digits'),
+        'on_change_with_purchase_uom_digits')
+    minimum_quantity = fields.Float('Minimum Quantity',
+        digits=(16, Eval('purchase_uom_digits', 2)),
+        depends=['purchase_uom_digits'])
+
+    @fields.depends('_parent_product.purchase_uom')
+    def on_change_with_purchase_uom_digits(self, name=None):
+        if self.product and self.product.purchase_uom:
+            return self.product.purchase_uom.digits
+        return 2
 
 
 class PurchaseRequest:
     __name__ = 'purchase.request'
-    minimum_quantity = fields.Function(fields.Float('Minimum Quantity'),
+    uom_digits = fields.Function(fields.Integer('UOM Digits'),
+        'on_change_with_uom_digits')
+    minimum_quantity = fields.Function(fields.Float('Minimum Quantity',
+            digits=(16, Eval('uom_digits', 2)), depends=['uom_digits']),
         'on_change_with_minimum_quantity')
+
+    @fields.depends('uom')
+    def on_change_with_uom_digits(self, name=None):
+        if self.uom:
+            return self.uom.digits
+        return 2
 
     @fields.depends('supplier', 'product', 'uom')
     def on_change_with_minimum_quantity(self, name):
@@ -43,9 +63,10 @@ class CreatePurchase:
 class PurchaseLine:
     __name__ = 'purchase.line'
 
-    minimum_quantity = fields.Float('Minimum Quantity', readonly=True, states={
+    minimum_quantity = fields.Float('Minimum Quantity', readonly=True,
+        digits=(16, Eval('unit_digits', 2)), states={
             'invisible': ~Bool(Eval('minimum_quantity')),
-            },
+            }, depends=['unit_digits'],
         help='The quantity must be greater or equal than minimum quantity')
 
     @fields.depends('minimum_quantity')
