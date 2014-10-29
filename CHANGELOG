@@ -1,1 +1,16 @@
+* Add domain to quantity to don't allow less than minimum quantity
+* Don't set minimum quantity when change product
+* Add missing purchase parameter to compute_purchase_line
+* Add unit test
+* Add digits attribute in minimum quantity fields and fix purchase.line view
+  records
+* Add missing files: translation, purchase.line views and spanish doc
+* Limit minimum quantity when creating manual purchase orders.
+
+Versin 3.2.0 - 2014-06-04
+* Adapted to 3.2 serires
+* Better use line.quantity in case another module is also updating the
+  quantity.
+
+Version 3.0.0 - 2014-04-09
 * Initial release

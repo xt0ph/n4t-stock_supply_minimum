@@ -2,7 +2,7 @@
 # copyright notices and license terms.
 from trytond.model import fields
 from trytond.pool import Pool, PoolMeta
-from trytond.pyson import Bool, Eval
+from trytond.pyson import If, Bool, Eval
 
 __all__ = ['ProductSupplier', 'PurchaseRequest', 'CreatePurchase',
     'PurchaseLine']
@@ -31,8 +31,10 @@ class PurchaseRequest:
         'on_change_with_uom_digits')
     minimum_quantity = fields.Function(fields.Float('Minimum Quantity',
             digits=(16, Eval('uom_digits', 2)), depends=['uom_digits']),
-        'on_change_with_minimum_quantity')
+        'on_change_with_minimum_quantity', searcher='search_minimum_quantity')
 
+    # TODO This can be removed when uom_digits it's introduced on base module.
+    # See: https://bugs.tryton.org/issue4282 (version 3.6)
     @fields.depends('uom')
     def on_change_with_uom_digits(self, name=None):
         if self.uom:
@@ -40,7 +42,7 @@ class PurchaseRequest:
         return 2
 
     @fields.depends('supplier', 'product', 'uom')
-    def on_change_with_minimum_quantity(self, name):
+    def on_change_with_minimum_quantity(self, name=None):
         Uom = Pool().get('product.uom')
         if not self.product:
             return
@@ -48,6 +50,30 @@ class PurchaseRequest:
             if product_supplier.party == self.party:
                 return Uom.compute_qty(self.product.purchase_uom,
                     product_supplier.minimum_quantity, self.uom)
+
+    @classmethod
+    def search_minimum_quantity(cls, name, clause):
+        pool = Pool()
+        Template = pool.get('product.template')
+        Product = pool.get('product.product')
+        ProductSupplier = pool.get('purchase.product_supplier')
+        _, operator, value = clause
+        Operator = fields.SQL_OPERATORS[operator]
+        table = cls.__table__()
+        template = Template.__table__()
+        product = Product.__table__()
+        product_supplier = ProductSupplier.__table__()
+
+        query = table.join(product,
+            condition=(product.id == table.product)).join(template,
+                condition=(product.template == template.id)).join(
+                    product_supplier, condition=(
+                        (product_supplier.product == template.id) &
+                        (product_supplier.party == table.party))).select(
+                    table.id,
+                    where=(Operator(product_supplier.minimum_quantity,
+                            value)))
+        return [('id', 'in', query)]
 
 
 class CreatePurchase:
@@ -64,49 +90,27 @@ class CreatePurchase:
 class PurchaseLine:
     __name__ = 'purchase.line'
 
-    minimum_quantity = fields.Float('Minimum Quantity', readonly=True,
-        digits=(16, Eval('unit_digits', 2)), states={
-            'invisible': ~Bool(Eval('minimum_quantity')),
-            }, depends=['unit_digits'],
-        help='The quantity must be greater or equal than minimum quantity')
+    minimum_quantity = fields.Function(fields.Float('Minimum Quantity',
+            digits=(16, Eval('unit_digits', 2)),
+            states={
+                'invisible': ~Bool(Eval('minimum_quantity')),
+                },
+            depends=['unit_digits'], help='The quantity must be greater or '
+            'equal than minimum quantity'),
+        'on_change_with_minimum_quantity')
 
-    @fields.depends('minimum_quantity')
-    def on_change_product(self):
-        minimum_quantity = self._get_minimum_quantity()
-        if minimum_quantity and (not self.quantity or
-                self.quantity < minimum_quantity):
-            self.quantity = minimum_quantity
-        else:
-            minimum_quantity = None
+    @classmethod
+    def __setup__(cls):
+        super(PurchaseLine, cls).__setup__()
+        minimum_domain = If(Bool(Eval('minimum_quantity', 0)),
+                ('quantity', '>=', Eval('minimum_quantity', 0)),
+                ())
+        if not 'minimum_quantity' in cls.quantity.depends:
+            cls.quantity.domain.append(minimum_domain)
+            cls.quantity.depends.append('minimum_quantity')
 
-        res = super(PurchaseLine, self).on_change_product()
-        if minimum_quantity:
-            res['minimum_quantity'] = minimum_quantity
-            res['quantity'] = minimum_quantity
-        else:
-            res['minimum_quantity'] = None
-        return res
-
-    @fields.depends('minimum_quantity')
-    def on_change_quantity(self):
-        minimum_quantity = self._get_minimum_quantity()
-        if (self.quantity and minimum_quantity and
-                self.quantity < minimum_quantity):
-            self.quantity = minimum_quantity
-        else:
-            minimum_quantity = None
-
-        res = super(PurchaseLine, self).on_change_quantity()
-        if minimum_quantity:
-            res['minimum_quantity'] = minimum_quantity
-            res['quantity'] = minimum_quantity
-        else:
-            res['minimum_quantity'] = None
-        return res
-
-    @fields.depends('product', '_parent_purchase.party', 'quantity', 'unit',
-        'minimum_quantity')
-    def _get_minimum_quantity(self):
+    @fields.depends('product', '_parent_purchase.party', 'unit')
+    def on_change_with_minimum_quantity(self, name=None):
         Uom = Pool().get('product.uom')
         if not self.product or not self.purchase.party:
             return
