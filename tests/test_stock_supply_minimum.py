@@ -42,53 +42,6 @@ class StockSupplyMinimumTestCase(unittest.TestCase):
         'Test depends'
         test_depends()
 
-    def test0010purchase_on_change_product_quantity(self):
-        '''
-        Test minimum_quantity calculation in on_change_product and
-        on_change_quantity in purchase.line
-        '''
-        with Transaction().start(DB_NAME, USER, context=CONTEXT):
-            company, = self.company.search([
-                    ('rec_name', '=', 'Dunder Mifflin'),
-                    ])
-            self.user.write([self.user(USER)], {
-                'main_company': company.id,
-                'company': company.id,
-                })
-
-            product, supplier = self.create_product_with_supplier(company)
-
-            # Prepare purchase
-            purchase, = self.purchase.create([{
-                        'party': supplier.id,
-                        'company': company.id,
-                        'payment_term': supplier.supplier_payment_term.id,
-                        'currency': company.currency.id,
-                        'invoice_address': supplier.addresses[0].id,
-                        'lines': [],
-                        }])
-
-            # Check on_change_product
-            purchase_line = self.purchase_line(purchase=purchase)
-            purchase_line.product = product
-            purchase_line.quantity = None
-            purchase_line.unit = None
-            on_change_product_res = purchase_line.on_change_product()
-            self.assertEqual(on_change_product_res['quantity'], 5)
-            self.assertEqual(on_change_product_res['minimum_quantity'], 5)
-
-            # Check on_change_quantity with quantity > minimum
-            purchase_line.quantity = 6
-            on_change_quantity_res = purchase_line.on_change_quantity()
-            self.assertNotIn('quantity', on_change_quantity_res)
-            self.assertIsNone(on_change_quantity_res['minimum_quantity'])
-
-            # Check on_change_quantity with quantity > minimum
-            purchase_line.quantity = 3
-            on_change_quantity_res = purchase_line.on_change_quantity()
-            self.assertEqual(on_change_quantity_res['quantity'], 5)
-            self.assertEqual(on_change_quantity_res['minimum_quantity'], 5)
-
     def test0010request_create_purchase(self):
         '''
         Test minimum_quantity calculation in on_change_product and
@@ -150,7 +103,6 @@ class StockSupplyMinimumTestCase(unittest.TestCase):
 
             self.assertIsNotNone(req_gt_minimum.purchase_line)
             self.assertEqual(req_gt_minimum.purchase_line.quantity, 7)
-
 
     def create_product_with_supplier(self, company):
         # Prepare supplier
