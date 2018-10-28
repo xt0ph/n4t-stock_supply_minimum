@@ -6,10 +6,9 @@ from trytond.pyson import If, Bool, Eval
 
 __all__ = ['ProductSupplier', 'PurchaseRequest', 'CreatePurchase',
     'PurchaseLine']
-__metaclass__ = PoolMeta
 
 
-class ProductSupplier:
+class ProductSupplier(metaclass=PoolMeta):
     __name__ = 'purchase.product_supplier'
     purchase_uom_digits = fields.Function(
         fields.Integer('Purchase UOM Digits'),
@@ -25,7 +24,7 @@ class ProductSupplier:
         return 2
 
 
-class PurchaseRequest:
+class PurchaseRequest(metaclass=PoolMeta):
     __name__ = 'purchase.request'
     uom_digits = fields.Function(fields.Integer('UOM Digits'),
         'on_change_with_uom_digits')
@@ -76,7 +75,7 @@ class PurchaseRequest:
         return [('id', 'in', query)]
 
 
-class CreatePurchase:
+class CreatePurchase(metaclass=PoolMeta):
     __name__ = 'purchase.request.create_purchase'
 
     @classmethod
@@ -88,7 +87,7 @@ class CreatePurchase:
         return line
 
 
-class PurchaseLine:
+class PurchaseLine(metaclass=PoolMeta):
     __name__ = 'purchase.line'
 
     minimum_quantity = fields.Function(fields.Float('Minimum Quantity',
