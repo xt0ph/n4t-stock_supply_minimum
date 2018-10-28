@@ -34,6 +34,7 @@ Create chart of accounts::
 
     >>> _ = create_chart(company)
     >>> accounts = get_accounts(company)
+    >>> revenue = accounts['revenue']
     >>> expense = accounts['expense']
 
 Create parties::
@@ -88,6 +89,15 @@ Create purchase user::
     >>> purchase_user.groups.append(purchase_group)
     >>> purchase_user.save()
 
+Create account category::
+
+    >>> ProductCategory = Model.get('product.category')
+    >>> account_category = ProductCategory(name="Account Category")
+    >>> account_category.accounting = True
+    >>> account_category.account_expense = expense
+    >>> account_category.account_revenue = revenue
+    >>> account_category.save()
+
 Create product::
 
     >>> config.user = product_admin_user.id
@@ -96,15 +106,13 @@ Create product::
     >>> Product = Model.get('product.product')
     >>> ProductSupplier = Model.get('purchase.product_supplier')
     >>> unit, = ProductUom.find([('name', '=', 'Unit')])
-    >>> product = Product()
     >>> template = ProductTemplate()
     >>> template.name = 'Product'
     >>> template.default_uom = unit
     >>> template.type = 'goods'
     >>> template.list_price = Decimal('0')
-    >>> template.cost_price = Decimal('15')
     >>> template.purchasable = True
-    >>> template.account_expense = expense
+    >>> template.account_category = account_category
     >>> product_supplier = template.product_suppliers.new()
     >>> product_supplier.company = company
     >>> product_supplier.party = supplier
@@ -114,8 +122,7 @@ Create product::
     >>> supplier_price.quantity = 0
     >>> supplier_price.unit_price = Decimal(14)
     >>> template.save()
-    >>> product.template = template
-    >>> product.save()
+    >>> product, = template.products
 
 Get stock locations::
 
