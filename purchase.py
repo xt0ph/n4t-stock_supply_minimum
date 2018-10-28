@@ -18,7 +18,7 @@ class ProductSupplier:
         digits=(16, Eval('purchase_uom_digits', 2)),
         depends=['purchase_uom_digits'])
 
-    @fields.depends('_parent_product.purchase_uom')
+    @fields.depends('product', '_parent_product.purchase_uom')
     def on_change_with_purchase_uom_digits(self, name=None):
         if self.product and self.product.purchase_uom:
             return self.product.purchase_uom.digits
@@ -80,10 +80,11 @@ class CreatePurchase:
     __name__ = 'purchase.request.create_purchase'
 
     @classmethod
-    def compute_purchase_line(cls, request, purchase):
-        line = super(CreatePurchase, cls).compute_purchase_line(request,
+    def compute_purchase_line(cls, key, requests, purchase):
+        line = super(CreatePurchase, cls).compute_purchase_line(key, requests,
             purchase)
-        line.quantity = max(line.quantity, request.minimum_quantity)
+        line.quantity = max([line.quantity] + [x.minimum_quantity for x in
+                requests])
         return line
 
 
@@ -109,7 +110,7 @@ class PurchaseLine:
             cls.quantity.domain.append(minimum_domain)
             cls.quantity.depends.append('minimum_quantity')
 
-    @fields.depends('product', '_parent_purchase.party', 'unit')
+    @fields.depends('product', 'purchase', '_parent_purchase.party', 'unit')
     def on_change_with_minimum_quantity(self, name=None):
         Uom = Pool().get('product.uom')
         if not self.product or not self.purchase.party:

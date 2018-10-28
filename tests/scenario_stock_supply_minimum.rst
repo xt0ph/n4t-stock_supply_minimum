@@ -8,23 +8,16 @@ Imports::
     >>> from dateutil.relativedelta import relativedelta
     >>> from decimal import Decimal
     >>> from proteus import config, Model, Wizard
+    >>> from trytond.tests.tools import activate_modules
     >>> from trytond.modules.company.tests.tools import create_company, \
     ...     get_company
     >>> from trytond.modules.account.tests.tools import (create_chart,
     ...     get_accounts)
     >>> today = datetime.date.today()
 
-Create database::
+Install stock_supply_minimum::
 
-    >>> config = config.set_trytond()
-    >>> config.pool.test = True
-
-Install stock_supply_minimum Module::
-
-    >>> Module = Model.get('ir.module')
-    >>> module, = Module.find([('name', '=', 'stock_supply_minimum')])
-    >>> module.click('install')
-    >>> Wizard('ir.module.install_upgrade').execute('upgrade')
+    >>> config = activate_modules('stock_supply_minimum')
 
 Create company::
 
@@ -163,7 +156,7 @@ There is no purchase request::
 
 Create the purchase request::
 
-    >>> create_pr = Wizard('purchase.request.create')
+    >>> create_pr = Wizard('stock.supply')
     >>> create_pr.execute('create_')
 
 There is now a draft purchase request::
@@ -209,7 +202,7 @@ Create new need for missing product::
 
 Create the purchase request::
 
-    >>> create_pr = Wizard('purchase.request.create')
+    >>> create_pr = Wizard('stock.supply')
     >>> create_pr.execute('create_')
 
 There is draft purchase request::
