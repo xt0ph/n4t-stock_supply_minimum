@@ -44,53 +44,8 @@ Create parties::
     >>> supplier = Party(name='Supplier')
     >>> supplier.save()
 
-Create stock admin user::
-
-    >>> stock_admin_user = User()
-    >>> stock_admin_user.name = 'Stock Admin'
-    >>> stock_admin_user.login = 'stock_admin'
-    >>> stock_admin_user.main_company = company
-    >>> stock_admin_group, = Group.find([('name', '=', 'Stock Administration')])
-    >>> stock_admin_user.groups.append(stock_admin_group)
-    >>> stock_admin_user.save()
-
-Create stock user::
-
-    >>> stock_user = User()
-    >>> stock_user.name = 'Stock'
-    >>> stock_user.login = 'stock'
-    >>> stock_user.main_company = company
-    >>> stock_group, = Group.find([('name', '=', 'Stock')])
-    >>> stock_user.groups.append(stock_group)
-    >>> stock_user.save()
-
-Create product user::
-
-    >>> product_admin_user = User()
-    >>> product_admin_user.name = 'Product'
-    >>> product_admin_user.login = 'product'
-    >>> product_admin_user.main_company = company
-    >>> product_admin_group, = Group.find([
-    ...         ('name', '=', 'Product Administration')
-    ...         ])
-    >>> product_admin_user.groups.append(product_admin_group)
-    >>> product_admin_user.save()
-
-Create purchase user::
-
-    >>> purchase_user = User()
-    >>> purchase_user.name = 'Purchase'
-    >>> purchase_user.login = 'purchase'
-    >>> purchase_user.main_company = company
-    >>> purchase_group, = Group.find([
-    ...     ('name', '=', 'Purchase')
-    ...     ])
-    >>> purchase_user.groups.append(purchase_group)
-    >>> purchase_user.save()
-
 Create product::
 
-    >>> config.user = product_admin_user.id
     >>> ProductUom = Model.get('product.uom')
     >>> ProductTemplate = Model.get('product.template')
     >>> Product = Model.get('product.product')
@@ -119,7 +74,6 @@ Create product::
 
 Get stock locations::
 
-    >>> config.user = stock_admin_user.id
     >>> Location = Model.get('stock.location')
     >>> warehouse_loc, = Location.find([('code', '=', 'WH')])
     >>> supplier_loc, = Location.find([('code', '=', 'SUP')])
@@ -129,7 +83,6 @@ Get stock locations::
 
 Create a need for missing product::
 
-    >>> config.user = stock_user.id
     >>> ShipmentOut = Model.get('stock.shipment.out')
     >>> shipment_out = ShipmentOut()
     >>> shipment_out.planned_date = today
@@ -161,7 +114,6 @@ Create the purchase request::
 
 There is now a draft purchase request::
 
-    >>> config.user = purchase_user.id
     >>> pr, = PurchaseRequest.find([('state', '=', 'draft')])
     >>> pr.product == product
     True
@@ -181,7 +133,6 @@ Create the purchase and check minimal quantity::
 
 Create new need for missing product::
 
-    >>> config.user = stock_user.id
     >>> ShipmentOut = Model.get('stock.shipment.out')
     >>> shipment_out = ShipmentOut()
     >>> shipment_out.planned_date = today
@@ -207,7 +158,6 @@ Create the purchase request::
 
 There is draft purchase request::
 
-    >>> config.user = purchase_user.id
     >>> pr, = PurchaseRequest.find([('state', '=', 'draft')])
     >>> pr.product == product
     True
