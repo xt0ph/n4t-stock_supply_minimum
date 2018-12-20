@@ -35,6 +35,7 @@ Create chart of accounts::
     >>> _ = create_chart(company)
     >>> accounts = get_accounts(company)
     >>> expense = accounts['expense']
+    >>> revenue = accounts['revenue']
 
 Create parties::
 
@@ -47,12 +48,13 @@ Create parties::
 
 Create account category::
 
-    >>> ProductCategory = Model.get('product.category')
-    >>> account_category = ProductCategory(name="Account Category")
-    >>> account_category.accounting = True
-    >>> account_category.account_expense = expense
-    >>> account_category.account_revenue = revenue
-    >>> account_category.save()
+  >>> ProductCategory = Model.get('product.category')
+  >>> account_category = ProductCategory(name="Account Category")
+  >>> account_category.accounting = True
+  >>> account_category.account_expense = expense
+  >>> account_category.account_revenue = revenue
+  >>> account_category.save()
+
 
 Create product::
 
