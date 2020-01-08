@@ -103,12 +103,18 @@ class PurchaseLine(metaclass=PoolMeta):
         Uom = Pool().get('product.uom')
         if not self.product or not self.purchase.party:
             return
-        for product_supplier in self.product.product_suppliers:
-            if product_supplier.party == self.purchase.party:
-                minimum_quantity = product_supplier.minimum_quantity
-                uom_category = self.product.purchase_uom.category
-                if (minimum_quantity and self.unit and
-                        self.unit in uom_category.uoms):
-                    return Uom.compute_qty(self.product.purchase_uom,
-                        minimum_quantity, self.unit)
-                return minimum_quantity
+
+        product_suppliers = list(self.product.product_suppliers_used(
+                **{'party': self.purchase.party.id}))
+
+        if not product_suppliers:
+            return
+
+        product_supplier = product_suppliers[0]
+        minimum_quantity = product_supplier.minimum_quantity
+        uom_category = self.product.purchase_uom.category
+        if (minimum_quantity and self.unit and
+                    self.unit in uom_category.uoms):
+            return Uom.compute_qty(self.product.purchase_uom,
+                    minimum_quantity, self.unit)
+        return minimum_quantity
