@@ -98,7 +98,7 @@ class PurchaseLine(metaclass=PoolMeta):
             cls.quantity.domain.append(minimum_domain)
             cls.quantity.depends.append('minimum_quantity')
 
-    @fields.depends('product', 'product.product_suppliers', 'purchase', '_parent_purchase.party', 'unit')
+    @fields.depends('product', 'purchase', '_parent_purchase.party', 'unit')
     def on_change_with_minimum_quantity(self, name=None):
         Uom = Pool().get('product.uom')
         if not self.product or not self.purchase.party:
